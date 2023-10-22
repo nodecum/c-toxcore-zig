@@ -1,0 +1,11 @@
+.{
+    .name = "c-toxcore-zig",
+    .version = "0.0.1",
+    .paths = .{""},
+    .dependencies = .{
+        .@"c-toxcore" = .{
+	    .url = "https://github.com/nodecum/c-toxcore/archive/2ce339aa.tar.gz",
+	    .hash = "1220a05a88b16e28f12a23b25e43b8ebcbe0a9c4baecf188e24d25c0f249f691831e",
+        },
+    },
+}
