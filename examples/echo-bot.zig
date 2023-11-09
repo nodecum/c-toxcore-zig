@@ -94,6 +94,10 @@ pub fn connectionStatus(status: Tox.ConnectionStatus) void {
     std.debug.print("Connection status:{s}\n", .{s});
 }
 
+fn friendName(id: u32, string: []const u8) void {
+    std.debug.print("friend name: {d}->{s}\n", .{ id, string });
+}
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
@@ -117,7 +121,7 @@ pub fn main() !void {
     defer tox.deinit();
 
     tox.connectionStatusCallback({}, connectionStatus);
-
+    tox.friend.nameCallback({}, friendName);
     const name = "Echo Bot";
     try tox.setName(name);
 
@@ -135,6 +139,8 @@ pub fn main() !void {
     std.debug.print("my address is: {s}\n", .{try Tox.bin2hex(adrhex, adr, true)});
     try updateSavedataFile(tox, alloc);
 
+    try tox.friend.delete(0);
+    //_ = foo;
     while (true) {
         tox.iterate({});
         std.time.sleep(tox.iterationInterval() * 1000 * 1000);

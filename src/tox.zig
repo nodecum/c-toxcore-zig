@@ -9,6 +9,8 @@ const sodium = @cImport({
 const Tox = @This();
 const log = std.log.scoped(.tox);
 
+pub const Friend = @import("tox/friend.zig");
+
 /// The major version number.
 /// Incremented when the API or ABI changes in an incompatible way.
 /// The function variants of these constants return the version number of the
@@ -221,6 +223,7 @@ pub const Options = struct {
 };
 
 handle: *c.Tox,
+friend: Friend,
 
 const Error = error{
     ToxOptionsMallocFailed,
@@ -254,11 +257,11 @@ const Error = error{
     /// and the rest is discarded. Passing an invalid length parameter also
     /// causes this error.
     ToxNewLoadBadFormat,
-    ToxBufferSizeTooSmall,
+    BufferTooSmall,
 };
 
 pub fn init(opt: Options) !Tox {
-    var self: Tox = Tox{ .handle = undefined };
+    var self: Tox = Tox{ .handle = undefined, .friend = undefined };
     var err_opt: c.Tox_Err_Options_New = c.TOX_ERR_OPTIONS_NEW_OK;
     var o: [*c]c.struct_Tox_Options =
         c.tox_options_new(&err_opt);
@@ -326,6 +329,7 @@ pub fn init(opt: Options) !Tox {
     }
     if (maybe_tox) |tox| {
         self.handle = tox;
+        self.friend = .{ .handle = tox };
     } else {
         return error.ToxNewFailed;
     }
@@ -569,12 +573,12 @@ pub fn iterate(self: Tox, context: anytype) void {
 /// the address, formatting is required.
 ///
 /// @param address A memory region of at least address_size() bytes.
-/// if less memory is given then error.ToxBufferSizeTooSmall
+/// if less memory is given then error.BufferTooSmall
 /// will be returned.
 /// see address_size() for the address format.
 pub fn getAddress(self: Tox, address: []u8) !void {
     if (address.len < addressSize())
-        return error.ToxBufferSizeTooSmall;
+        return error.BufferTooSmall;
     c.tox_self_get_address(self.handle, @ptrCast(address));
 }
 /// hex size for bin2hex conversion
@@ -585,10 +589,10 @@ pub fn hexSizeForBin(bin_size: usize) usize {
 /// Write byte sequence as hexadecimal string,
 /// Returns zero terminated result.
 /// hex.len should be greater or equal to hex_size_for_bin(),
-/// returns error.ToxBufferSizeTooSmall if this is smaller.
+/// returns error.BufferTooSmall if this is smaller.
 pub fn bin2hex(hex: []u8, bin: []const u8, uppercase: bool) ![:0]const u8 {
     if (hex.len < hexSizeForBin(bin.len))
-        return error.ToxBufferSizeTooSmall;
+        return error.BufferTooSmall;
     _ = sodium.sodium_bin2hex(
         @ptrCast(hex),
         hex.len,
@@ -603,7 +607,7 @@ pub fn bin2hex(hex: []u8, bin: []const u8, uppercase: bool) ![:0]const u8 {
     return hex[0..(hex.len - 1) :0];
 }
 /// parse hexadecimal string into byte sequence
-/// returns error.ToxBufferSizeTooSmall if there is
+/// returns error.BufferTooSmall if there is
 /// not enough space in bin.
 pub fn hex2bin(bin: []u8, hex: []const u8) ![]const u8 {
     var bin_len: usize = 0;
@@ -616,7 +620,7 @@ pub fn hex2bin(bin: []u8, hex: []const u8) ![]const u8 {
         &bin_len,
         null,
     );
-    if (n == -1) return error.ToxBufferSizeTooSmall else return bin[0..bin_len];
+    if (n == -1) return error.BufferTooSmall else return bin[0..bin_len];
 }
 
 /// @brief Set the 4-byte nospam part of the address.
@@ -638,23 +642,24 @@ pub fn getNospam(self: Tox) u32 {
 /// Copy the Tox Public Key (long term) from the Tox object.
 ///
 /// @param public_key A memory region of at least TOX_PUBLIC_KEY_SIZE bytes. If
-/// capcity of public_key is smaller then error.ToxBufferSizeTooSmall
+/// capcity of public_key is smaller then error.BufferTooSmall
 /// will be returned.
 pub fn getPublicKey(self: Tox, public_key: []u8) ![]const u8 {
-    if (public_key.len < publicKeySize())
-        return error.ToxBufferSizeTooSmall;
+    const size = publicKeySize();
+    if (public_key.len < size)
+        return error.BufferTooSmall;
     c.tox_self_get_public_key(self.handle, @ptrCast(public_key));
-    return public_key[0..];
+    return public_key[0..size];
 }
 
 /// @brief Copy the Tox Secret Key from the Tox object.
 ///
 /// @param secret_key A memory region of at least TOX_SECRET_KEY_SIZE bytes. If
-/// capcity of secret_key is smaller then error.ToxBufferSizeTooSmall
+/// capcity of secret_key is smaller then error.BufferTooSmall
 /// will be returned.
 pub fn getSecretKey(self: Tox, secret_key: []u8) ![]const u8 {
     if (secret_key.len < secretKeySize())
-        return error.ToxBufferSizeTooSmall;
+        return error.BufferTooSmall;
     c.tox_self_get_secret_key(self.handle, @ptrCast(secret_key));
     return secret_key[0..];
 }
@@ -701,7 +706,7 @@ pub fn getNameSize(self: Tox) usize {
 pub fn getName(self: Tox, name: []u8) ![]const u8 {
     const size = self.getNameSize();
     if (name.len < size)
-        return error.ToxBufferSizeTooSmall;
+        return error.BufferTooSmall;
     c.tox_self_get_name(self.handle, @ptrCast(name));
     return name[0..size];
 }
@@ -742,7 +747,7 @@ pub fn getStatusMessageSize(self: Tox) usize {
 pub fn getStatusMessage(self: Tox, status_message: []u8) ![]const u8 {
     const size = self.getStatusMessageSize();
     if (status_message.len < size)
-        return error.ToxBufferSizeTooSmall;
+        return error.BufferTooSmall;
     c.tox_self_get_status_message(self.handle, @ptrCast(status_message));
     return status_message[0..size];
 }
