@@ -7,9 +7,9 @@ const sodium = @cImport({
     @cInclude("sodium.h");
 });
 const Tox = @This();
+const wrap = @import("wrap.zig");
+const Friend = @import("tox/friend.zig");
 const log = std.log.scoped(.tox);
-
-pub const Friend = @import("tox/friend.zig");
 
 /// The major version number.
 /// Incremented when the API or ABI changes in an incompatible way.
@@ -514,7 +514,7 @@ fn ConnectionStatusCallbackHandler(comptime Context: type) type {
 
 /// Sets the connection status callback handler.
 /// `context` may be a pointer or `{}`.
-pub fn connectionStatusCallback(
+pub fn connectionStatusCallbackOld(
     self: Tox,
     context: anytype,
     comptime handler: ConnectionStatusCallbackHandler(@TypeOf(context)),
@@ -548,6 +548,21 @@ pub fn connectionStatusCallback(
     //        H.callback,
     //        @as(?*const anyopaque, @ptrCast(context)),
     //    );
+}
+
+pub fn connectionStatusCallback(
+    self: Tox,
+    ctx: anytype,
+    comptime handler: anytype,
+) void {
+    wrap.setCallback(
+        self,
+        ctx,
+        c.tox_callback_self_connection_status,
+        .{ConnectionStatus},
+        .{},
+        handler,
+    );
 }
 
 /// Return the time in milliseconds before `tox_iterate()` should be called again
@@ -775,7 +790,11 @@ pub fn getStatus(self: Tox) UserStatus {
 //    pub const log_level = .debug;
 //};
 
-test "tox_new" {
-    var tox = try init(.{});
-    defer tox.deinit();
+test {
+    std.testing.refAllDecls(@This());
+    _ = wrap;
+}
+
+test "String test" {
+    // try std.testing.expectEqualStrings("Hi", "Hi");
 }

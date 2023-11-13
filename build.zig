@@ -26,15 +26,16 @@ pub fn build(b: *std.Build) !void {
         .source_file = .{ .path = "src/tox.zig" },
     });
 
-    const tests = b.addTest(.{
+    const test_exe = b.addTest(.{
         .root_source_file = .{ .path = "src/tox.zig" },
         .target = target,
         .optimize = optimize,
     });
-    tests.linkLibrary(c_toxcore_lib);
+    test_exe.linkLibrary(c_toxcore_lib);
+    const run_test = b.addRunArtifact(test_exe);
 
     const test_step = b.step("test", "Run all tests");
-    test_step.dependOn(&tests.step);
+    test_step.dependOn(&run_test.step);
 
     const all_example_step = b.step("examples", "Build examples");
     inline for (EXAMPLES) |example_name| {
