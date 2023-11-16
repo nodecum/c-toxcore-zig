@@ -1,7 +1,7 @@
 const std = @import("std");
 
-const EXAMPLES = .{
-    "echo-bot",
+const APPS = .{
+    "key", "echo-bot",
 };
 
 pub fn build(b: *std.Build) !void {
@@ -25,6 +25,9 @@ pub fn build(b: *std.Build) !void {
     const tox = b.addModule("tox", .{
         .source_file = .{ .path = "src/tox.zig" },
     });
+    const sodium = b.addModule("sodium", .{
+        .source_file = .{ .path = "src/sodium.zig" },
+    });
 
     const test_exe = b.addTest(.{
         .root_source_file = .{ .path = "src/tox.zig" },
@@ -37,21 +40,28 @@ pub fn build(b: *std.Build) !void {
     const test_step = b.step("test", "Run all tests");
     test_step.dependOn(&run_test.step);
 
-    const all_example_step = b.step("examples", "Build examples");
-    inline for (EXAMPLES) |example_name| {
-        const example = b.addExecutable(.{
-            .name = example_name,
-            .root_source_file = .{ .path = "examples" ++ std.fs.path.sep_str ++ example_name ++ ".zig" },
+    const all_apps_step = b.step("apps", "Build apps");
+    inline for (APPS) |app_name| {
+        const app = b.addExecutable(.{
+            .name = app_name,
+            .root_source_file = .{
+                .path = "apps" ++ std.fs.path.sep_str ++ app_name ++ ".zig",
+            },
             .target = target,
             .optimize = optimize,
         });
-        example.addModule("tox", tox);
-        example.linkLibrary(c_toxcore_lib);
+        app.addModule("sodium", sodium);
+        app.addModule("tox", tox);
 
-        var run = b.addRunArtifact(example);
+        app.linkLibrary(c_toxcore_lib);
+
+        var run = b.addRunArtifact(app);
         if (b.args) |args| run.addArgs(args);
-        b.step("run-" ++ example_name, "Run the " ++ example_name ++ " example").dependOn(&run.step);
+        b.step(
+            "run-" ++ app_name,
+            "Run the " ++ app_name ++ " app",
+        ).dependOn(&run.step);
 
-        all_example_step.dependOn(&example.step);
+        all_apps_step.dependOn(&app.step);
     }
 }

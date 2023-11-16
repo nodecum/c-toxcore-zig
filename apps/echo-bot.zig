@@ -1,6 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const Tox = @import("tox");
+const sodium = @import("sodium");
 
 pub const std_options = struct {
     // Set the log level to info
@@ -80,7 +81,7 @@ pub fn bootstrap(tox: Tox, alloc: Allocator) !void {
         try tox.bootstrap(
             node[0],
             node[1],
-            try Tox.hex2bin(key_bin, node[2]),
+            try sodium.hex2bin(key_bin, node[2]),
         );
     }
 }
@@ -133,10 +134,10 @@ pub fn main() !void {
     var adr = try alloc.alloc(u8, Tox.addressSize());
     defer alloc.free(adr);
     try tox.getAddress(adr);
-    var adrhex = try alloc.alloc(u8, Tox.hexSizeForBin(Tox.addressSize()));
+    var adrhex = try alloc.alloc(u8, sodium.hexSizeForBin(Tox.addressSize()));
     defer alloc.free(adrhex);
 
-    std.debug.print("my address is: {s}\n", .{try Tox.bin2hex(adrhex, adr, true)});
+    std.debug.print("my address is: {s}\n", .{try sodium.bin2hex(adrhex, adr, true)});
     try updateSavedataFile(tox, alloc);
 
     try tox.friend.delete(0);

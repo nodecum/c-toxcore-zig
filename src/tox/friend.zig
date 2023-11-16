@@ -77,7 +77,7 @@ pub fn add(self: Tox, address: []const u8, message: []const u8) !u32 {
 ///
 /// @return the friend number on success, an unspecified value on failure.
 /// @see tox_friend_add for a more detailed description of friend numbers.
-pub fn addNoRequest(self: Tox, public_key: []const u8) !u32 {
+pub fn addNoRequest(self: anytype, public_key: []const u8) !u32 {
     return wrap.getResult(
         c.tox_friend_add_norequest,
         self,
@@ -297,7 +297,7 @@ pub fn statusMessageCallback(
 ///
 /// @deprecated This getter is deprecated. Use the event and store the status
 ///   in the client state.
-pub fn userStatus(self: Friend, friend_id: u32) !Tox.UserStatus {
+pub fn userStatus(self: Friend, friend_id: u32) wrap.ErrSet(ErrQuery)!Tox.UserStatus {
     return wrap.getResult(
         c.tox_friend_get_status,
         self,
@@ -314,3 +314,8 @@ pub fn userStatus(self: Friend, friend_id: u32) !Tox.UserStatus {
 // Pass NULL to unset.
 // This event is triggered when a friend changes their user status.
 //void tox_callback_friend_status(Tox *tox, tox_friend_status_cb *callback);
+
+test "Friend test" {
+    var tox = try Tox.init(.{});
+    defer tox.deinit();
+}
