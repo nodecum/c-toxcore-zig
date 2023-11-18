@@ -1,5 +1,4 @@
 const std = @import("std");
-const Allocator = std.mem.Allocator;
 const sodium = @import("sodium");
 
 pub fn main() !void {

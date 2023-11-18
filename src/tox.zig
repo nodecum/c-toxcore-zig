@@ -62,6 +62,8 @@ pub fn nospamSize() u32 {
 pub fn addressSize() u32 {
     return c.tox_address_size();
 }
+pub const address_size: u32 = c.TOX_ADDRESS_SIZE;
+
 /// Maximum length of a nickname in bytes.
 pub fn maxNameLength() u32 {
     return c.tox_max_name_length();

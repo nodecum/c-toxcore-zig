@@ -1,7 +1,7 @@
 const std = @import("std");
 
 const APPS = .{
-    "key", "echo-bot",
+    "key", "bs-node", "response-node", "echo-bot",
 };
 
 pub fn build(b: *std.Build) !void {
