@@ -9,6 +9,8 @@ const node_port = 33446;
 const bs_node_public_key_hex = "364095EFA4EFA86AC8F720A79F2040F830BCC8CFF344EC35E2F8FA4F54641A7C";
 const bs_node_port = 33445;
 
+const test_node_address = "7EBCF35E842C35D9A1AA49999C3B4AC27C41168316B32264254BDF8323673A7C12345678FB57";
+
 pub fn connectionStatus(status: Tox.ConnectionStatus) void {
     const s = switch (status) {
         .none => "none",
@@ -20,6 +22,10 @@ pub fn connectionStatus(status: Tox.ConnectionStatus) void {
 
 fn friendName(id: u32, string: []const u8) void {
     std.debug.print("friend name: {d}->{s}\n", .{ id, string });
+}
+
+fn friendStatusMessage(id: u32, msg: []const u8) void {
+    std.debug.print("friend status message: {d}->{s}\n", .{ id, msg });
 }
 
 pub fn main() !void {
@@ -34,8 +40,10 @@ pub fn main() !void {
 
     tox.connectionStatusCallback({}, connectionStatus);
     tox.friend.nameCallback({}, friendName);
-    const node_name = "response node";
+    tox.friend.statusMessageCallback({}, friendStatusMessage);
+    const node_name = "response-node";
     try tox.setName(node_name);
+    tox.setNospam(0x12345678);
 
     const status_message = "responding your messages";
     try tox.setStatusMessage(status_message);
@@ -60,6 +68,13 @@ pub fn main() !void {
             try sodium.bin2hex(&addr_hex, &addr_bin, true),
         },
     );
+
+    var tn_addr_bin: [Tox.address_size]u8 = undefined;
+    _ = try sodium.hex2bin(&tn_addr_bin, test_node_address);
+
+    const tn_id = try tox.friend.addNoRequest(&tn_addr_bin);
+    std.debug.print("added friend with id:{d}\n", .{tn_id});
+
     while (true) {
         tox.iterate({});
         std.time.sleep(tox.iterationInterval() * 1000 * 1000);

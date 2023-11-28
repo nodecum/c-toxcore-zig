@@ -509,12 +509,12 @@ pub const ConnectionStatus = enum(c.enum_Tox_Connection) {
 
 pub fn connectionStatusCallback(
     self: Tox,
-    ctx: anytype,
+    comptime Ctx: type,
     comptime handler: anytype,
 ) void {
     wrap.setCallback(
         self,
-        ctx,
+        Ctx,
         c.tox_callback_self_connection_status,
         .{ConnectionStatus},
         .{},
@@ -536,7 +536,7 @@ pub fn iterate(self: Tox, context: anytype) void {
     if (is_void)
         c.tox_iterate(self.handle, null)
     else
-        c.tox_iterate(self.handle, @as(?*const anyopaque, @ptrCast(context)));
+        c.tox_iterate(self.handle, @as(?*anyopaque, @ptrCast(context)));
 }
 
 ///  Writes the Tox friend address of the client to a byte array.
@@ -708,7 +708,7 @@ pub fn getStatus(self: Tox) UserStatus {
 
 test {
     std.testing.refAllDecls(@This());
-    _ = wrap;
+    //_ = wrap;
 }
 
 test "String test" {

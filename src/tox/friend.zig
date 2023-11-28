@@ -81,7 +81,7 @@ pub fn addNoRequest(self: anytype, public_key: []const u8) !u32 {
     return wrap.getResult(
         c.tox_friend_add_norequest,
         self,
-        .{@ptrCast(public_key)},
+        .{@as([*c]const u8, @ptrCast(public_key))},
         ErrAdd,
     );
 }

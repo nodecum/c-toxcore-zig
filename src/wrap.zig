@@ -95,11 +95,14 @@ fn CallbackHandle(comptime Args: []const type, comptime Context: type) type {
     comptime var n = Args.len;
     if (Context != void) n += 1; // number of arguments
     comptime var params: [n]Type.Fn.Param = undefined;
-    for (Args, 0..) |arg, i| {
+    comptime var idx0 = 0;
+    if (Context != void) {
+        params[0] = .{ .type = Context, .is_generic = false, .is_noalias = false };
+        idx0 = 1;
+    }
+    for (Args, idx0..) |arg, i| {
         params[i] = .{ .type = arg, .is_generic = false, .is_noalias = false };
     }
-    if (Context != void)
-        params[n - 1].type = Context;
     return @Type(Type{ .Fn = .{
         .calling_convention = .Unspecified,
         .alignment = 0,
@@ -148,9 +151,10 @@ fn cToZig(cv: anytype, comptime zy: type) zy {
                 }
             }
         } else if (zi.Pointer.size == .One) {
-            if (ci == .Pointer and ci.Pointer.size == .C) {
-                return @as(zy, @ptrFromInt(@intFromPtr(cv)));
-            }
+            return @as(zy, @ptrFromInt(@intFromPtr(cv)));
+            //if (ci == .Pointer and ci.Pointer.size == .C) {
+            //    return @as(zy, @ptrFromInt(@intFromPtr(cv)));
+            // }
         }
     } else if (zi == .Enum) {
         if (ci == .Int or ci == .ComptimeInt) {
@@ -296,19 +300,19 @@ fn callHandle(
     if (Ctx == void) {
         @call(.auto, hd, zv);
     } else {
-        @call(.auto, hd, .{zv} ++ .{cToZig(ctx, Ctx)});
+        @call(.auto, hd, .{cToZig(ctx, Ctx)} ++ zv);
     }
 }
 
 pub fn setCallback(
     self: anytype,
-    ctx: anytype,
+    comptime Ctx: type,
     fct: anytype,
     comptime Args: anytype,
     e_args: anytype,
-    comptime hd: CallbackHandle(ZigTypes(Args), @TypeOf(ctx)),
+    comptime hd: CallbackHandle(ZigTypes(Args), Ctx),
 ) void {
-    const Ctx = @TypeOf(ctx);
+    //const Ctx = @TypeOf(ctx);
     const Ct = CTypes(Args);
     const H = switch (Ct.len) {
         1 => struct {
