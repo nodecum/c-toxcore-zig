@@ -6,6 +6,10 @@ const c = @cImport({
 const sodium_c = @cImport({
     @cInclude("sodium.h");
 });
+const inet_c = @cImport({
+    @cInclude("arpa/inet.h");
+});
+
 const Tox = @This();
 const wrap = @import("wrap.zig");
 const Friend = @import("tox/friend.zig");
@@ -101,6 +105,38 @@ pub fn maxFilenameLength() u32 {
 /// strings, so they are 255 characters plus one NUL byte.
 pub fn maxHostnameLength() u32 {
     return c.tox_max_hostname_length();
+}
+
+/// checksum
+pub fn dataCheckSum(data: []const u8) u16 {
+    var checksum = [_]u8{0} ** 2;
+    var check: u16 = 0;
+
+    for (data, 0..) |d, i| {
+        checksum[i % 2] ^= d;
+    }
+
+    @memcpy(@as([*]u8, @ptrCast(&check)), &checksum);
+    return check;
+}
+
+// Format: `[real_pk (32 bytes)][nospam number (4 bytes)][checksum (2 bytes)]`
+//
+// @param[out] address FRIEND_ADDRESS_SIZE byte address to give to others.
+pub fn addressFromPublicKey(
+    public_key: []const u8,
+    nospam_host: u32,
+    address: []u8,
+) ![]const u8 {
+    if (address.len < address_size)
+        return error.BufferTooSmall;
+    const nospam_net = inet_c.htonl(nospam_host);
+    @memcpy(address[0..public_key.len], public_key);
+    @memcpy(address[public_key.len..], @as([*]const u8, @ptrCast(&nospam_net)));
+    const nospam_len = @sizeOf(@TypeOf(nospam_net));
+    const check = dataCheckSum(address[0 .. public_key.len + nospam_len]);
+    @memcpy(address[public_key.len + nospam_len ..], @as([*]const u8, @ptrCast(&check)));
+    return address[0..];
 }
 
 /// Type of proxy used to connect to TCP relays.
@@ -335,7 +371,7 @@ pub fn init(opt: Options) !Tox {
     } else {
         return error.ToxNewFailed;
     }
-    log.info("Created new tox instance", .{});
+    //log.info("Created new tox instance", .{});
     return self;
 }
 

@@ -52,11 +52,15 @@ pub const ErrAdd = enum(c.Tox_Err_Friend_Add) {
 /// @param length The length of the data byte array.
 ///
 /// @return the friend number on success, an unspecified value on failure.
-pub fn add(self: Tox, address: []const u8, message: []const u8) !u32 {
+pub fn add(self: anytype, address: []const u8, message: []const u8) !u32 {
     return wrap.getResult(
         c.tox_friend_add,
         self,
-        .{ @ptrCast(address), @ptrCast(message), message.len },
+        .{
+            @as([*c]const u8, @ptrCast(address)),
+            @as([*c]const u8, @ptrCast(message)),
+            message.len,
+        },
         ErrAdd,
     );
 }

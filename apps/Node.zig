@@ -5,13 +5,15 @@ const Node = @This();
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 
-fn connectionStatus(_: *Node, status: Tox.ConnectionStatus) void {
+const log = std.log.scoped(.Node);
+
+fn connectionStatus(n: *Node, status: Tox.ConnectionStatus) void {
     const s = switch (status) {
         .none => "none",
         .tcp => "tcp",
         .udp => "udp",
     };
-    std.debug.print("Connection status:{s}\n", .{s});
+    log.info("{s} connection status: {s}", .{ n.name, s });
 }
 
 pub const Friend = struct {
@@ -39,24 +41,29 @@ fn setOptionalString(
 }
 
 fn friendNameCb(node: *Node, id: u32, name: []const u8) void {
-    std.debug.print("friend name: {d}->{s}\n", .{ id, name });
+    log.debug("{s} friend name: {d}->{s}", .{ node.name, id, name });
     setOptionalString(Friend, &node.friends, id, "name", name);
 }
 
 fn friendStatusMessageCb(node: *Node, id: u32, msg: []const u8) void {
-    std.debug.print("friend status message: {d}->{s}\n", .{ id, msg });
+    log.debug("{s} friend status message: {d}->{s}", .{ node.name, id, msg });
     setOptionalString(Friend, &node.friends, id, "status_message", msg);
 }
 
 allocator: Allocator,
 tox: Tox,
+name: []const u8,
 friends: ArrayList(Friend),
 timeout: u16,
+keep_running: *bool,
 
 pub const Options = struct {
+    name: []const u8,
     secret_key: []const u8,
-    node_port: u16,
+    nospam: u32,
+    port: u16,
     timeout: u16,
+    keep_running: *bool,
 };
 
 pub fn init(allocator: Allocator, opt: Options) !Node {
@@ -64,14 +71,16 @@ pub fn init(allocator: Allocator, opt: Options) !Node {
     var secret_key_bin: [sodium.crypto_box.secret_key_size]u8 = undefined;
     tox_opt.savedata_type = .key;
     tox_opt.savedata_data = @ptrCast(try sodium.hex2bin(&secret_key_bin, opt.secret_key));
-    tox_opt.start_port = opt.node_port;
-    var self: Node = Node{
+    tox_opt.start_port = opt.port;
+    var self = Node{
         .allocator = allocator,
         .tox = try Tox.init(tox_opt),
+        .name = opt.name,
         .friends = ArrayList(Friend).init(allocator),
         .timeout = opt.timeout,
+        .keep_running = opt.keep_running,
     };
-    self.tox.setNospam(0x12345678);
+    self.tox.setNospam(opt.nospam);
     self.tox.connectionStatusCallback(*Node, connectionStatus);
     self.tox.friend.nameCallback(*Node, friendNameCb);
     self.tox.friend.statusMessageCallback(*Node, friendStatusMessageCb);
@@ -113,6 +122,12 @@ pub fn getAddress(self: Node) ![]const u8 {
     return try sodium.bin2hex(&addr_hex, &addr_bin, true);
 }
 
+pub fn addFriend(self: Node, friend_address: []const u8, message: []const u8) !u32 {
+    var rpn_addr_bin: [Tox.address_size]u8 = undefined;
+    _ = try sodium.hex2bin(&rpn_addr_bin, friend_address);
+    return try self.tox.friend.add(&rpn_addr_bin, message);
+}
+
 pub fn addFriendNoRequest(self: Node, friend_address: []const u8) !u32 {
     var rpn_addr_bin: [Tox.address_size]u8 = undefined;
     _ = try sodium.hex2bin(&rpn_addr_bin, friend_address);
@@ -131,7 +146,7 @@ pub fn check(
     var falseValue: []const u8 = undefined;
     var wait = false;
     const t0 = std.time.milliTimestamp();
-    while (true) {
+    while (@atomicLoad(bool, self.*.keep_running, .SeqCst)) {
         if (l.*.items.len > id) {
             if (@field(l.*.items[id], field)) |v| {
                 if (std.mem.eql(u8, v, value)) {
@@ -146,19 +161,19 @@ pub fn check(
         if (t1 - t0 > self.*.timeout) {
             // timeout reached
             if (foundFalseValue) {
-                std.debug.print(
-                    "check for {s} in {s}: timeout, expected '{s}', found '{s}'.\n",
-                    .{ list, field, value, falseValue },
+                log.err(
+                    "{s} check for {s} in {s}: timeout, expected '{s}', found '{s}'.",
+                    .{ self.name, list, field, value, falseValue },
                 );
             } else {
-                std.debug.print(
-                    "check for {s} in {s}: timeout, no value found.\n",
-                    .{ list, field },
+                log.err(
+                    "{s} check for {s} in {s}: timeout, no value found.",
+                    .{ self.name, list, field },
                 );
             }
             return error.Timeout;
         }
-        if (wait) {
+        if (@atomicLoad(bool, self.*.keep_running, .SeqCst) and wait) {
             std.time.sleep(self.*.tox.iterationInterval() * 1000 * 1000);
         }
         self.*.tox.iterate(self);
