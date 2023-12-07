@@ -29,7 +29,7 @@ fn run_(
     try node.setName(node.name, "responding your messages");
     log.debug("my address is: {s}", .{try node.getAddress()});
     try node.bootstrap(boot.host, boot.port, boot.public_key);
-    _ = try node.addFriendNoRequest(query.address);
+    _ = try node.friendAddNoRequest(query.address);
 
     while (@atomicLoad(bool, keep_running, .SeqCst)) {
         node.tox.iterate(&node);

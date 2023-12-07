@@ -122,16 +122,23 @@ pub fn getAddress(self: Node) ![]const u8 {
     return try sodium.bin2hex(&addr_hex, &addr_bin, true);
 }
 
-pub fn addFriend(self: Node, friend_address: []const u8, message: []const u8) !u32 {
+pub fn friendAdd(self: Node, friend_address: []const u8, message: []const u8) !u32 {
     var rpn_addr_bin: [Tox.address_size]u8 = undefined;
     _ = try sodium.hex2bin(&rpn_addr_bin, friend_address);
     return try self.tox.friend.add(&rpn_addr_bin, message);
 }
 
-pub fn addFriendNoRequest(self: Node, friend_address: []const u8) !u32 {
+pub fn friendAddNoRequest(self: Node, friend_address: []const u8) !u32 {
     var rpn_addr_bin: [Tox.address_size]u8 = undefined;
     _ = try sodium.hex2bin(&rpn_addr_bin, friend_address);
     return try self.tox.friend.addNoRequest(&rpn_addr_bin);
+}
+
+pub fn friendByPublicKey(self: Node, public_key_hex: []const u8) !u32 {
+    var public_key_bin: [sodium.crypto_box.public_key_size]u8 = undefined;
+    return try self.tox.friend.byPublicKey(
+        try sodium.hex2bin(&public_key_bin, public_key_hex),
+    );
 }
 
 pub fn check(

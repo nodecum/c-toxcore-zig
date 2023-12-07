@@ -1,6 +1,4 @@
 const std = @import("std");
-const Tox = @import("tox");
-const sodium = @import("sodium");
 const NodeInfo = @import("NodeInfo.zig");
 const BootNode = @import("BootNode.zig");
 const RespNode = @import("RespNode.zig");

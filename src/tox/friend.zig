@@ -113,20 +113,20 @@ pub const ErrByPublicKey = enum(c.Tox_Err_Friend_By_Public_Key) {
 /// @return the friend number on success,
 /// @param public_key A byte array containing the Public Key.
 pub fn byPublicKey(
-    self: Tox,
+    self: anytype,
     public_key: []const u8,
 ) wrap.ErrSet(ErrByPublicKey)!u32 {
     return wrap.getResult(
         c.tox_friend_by_public_key,
         self,
-        .{public_key},
+        .{@as([*c]const u8, @ptrCast(public_key))},
         ErrByPublicKey,
     );
 }
 
 /// @brief Checks if a friend with the given friend number exists and returns true if
 /// it does.
-pub fn exists(self: Tox, friend_number: u32) bool {
+pub fn exists(self: anytype, friend_number: u32) bool {
     return c.tox_friend_exists(self.handle, friend_number);
 }
 
@@ -134,7 +134,7 @@ pub fn exists(self: Tox, friend_number: u32) bool {
 ///
 /// This function can be used to determine how much memory to allocate for
 /// tox_self_get_friend_list.
-pub fn listSize(self: Tox) usize {
+pub fn listSize(self: anytype) usize {
     return c.tox_self_get_friend_list_size(self.handle);
 }
 /// @brief Copy a list of valid friend numbers into an array.
@@ -144,9 +144,11 @@ pub fn listSize(self: Tox) usize {
 /// @param friend_list A memory region with enough space to hold the friend
 /// list.
 /// returns the slice of friend numbers or error.BufferTooSmall if buffer is not big enough.
-pub fn getList(self: Tox, friend_list: []u32) ![]const u32 {
-    if (self.friend.listSize() > friend_list.len) return error.BufferTooSmall;
+pub fn getList(self: anytype, friend_list: []u32) ![]const u32 {
+    const list_size = self.listSize();
+    if (list_size > friend_list.len) return error.BufferTooSmall;
     c.tox_self_get_friend_list(self.handle, @ptrCast(friend_list));
+    return friend_list[0..list_size];
 }
 
 pub const ErrGetPublicKey = enum(c.Tox_Err_Friend_Get_Public_Key) {
