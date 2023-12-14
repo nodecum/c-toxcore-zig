@@ -301,7 +301,7 @@ const Error = error{
 pub fn init(opt: Options) !Tox {
     var self: Tox = Tox{ .handle = undefined, .friend = undefined };
     var err_opt: c.Tox_Err_Options_New = c.TOX_ERR_OPTIONS_NEW_OK;
-    var o: [*c]c.struct_Tox_Options =
+    const o: [*c]c.struct_Tox_Options =
         c.tox_options_new(&err_opt);
     if (err_opt != c.TOX_ERR_OPTIONS_NEW_OK)
         return error.ToxOptionsMallocFailed;

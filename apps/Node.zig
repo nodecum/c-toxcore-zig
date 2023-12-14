@@ -141,6 +141,12 @@ pub fn friendByPublicKey(self: Node, public_key_hex: []const u8) !u32 {
     );
 }
 
+pub fn friendGetPublicKey(self: Node, friend_id: u32, public_key: []u8) ![]const u8 {
+    var public_key_bin: [sodium.crypto_box.public_key_size]u8 = undefined;
+    _ = try self.tox.friend.getPublicKey(friend_id, &public_key_bin);
+    return try sodium.bin2hex(public_key, &public_key_bin, true);
+}
+
 pub fn check(
     self: *Node,
     comptime list: []const u8,

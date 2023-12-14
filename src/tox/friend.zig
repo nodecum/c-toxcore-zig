@@ -161,7 +161,7 @@ pub const ErrGetPublicKey = enum(c.Tox_Err_Friend_Get_Public_Key) {
 /// @param public_key A memory region of at least TOX_PUBLIC_KEY_SIZE bytes.
 ///
 /// @return the key on success, error.BufferToSmall or error.NotFound.
-pub fn getPublicKey(self: Tox, friend_id: u32, public_key: []u8) ![]const u8 {
+pub fn getPublicKey(self: anytype, friend_id: u32, public_key: []u8) ![]const u8 {
     return wrap.fillBuffer(
         c.tox_friend_get_public_key,
         self,
@@ -182,7 +182,7 @@ pub const ErrLastOnline = enum(c.Tox_Err_Friend_Get_Last_Online) {
 /// This function will return error.NotFound on error.
 ///
 /// @param friend_number The friend number you want to query.
-pub fn lastOnline(self: Tox, friend_number: u32) !u64 {
+pub fn lastOnline(self: anytype, friend_number: u32) !u64 {
     return wrap.getResult(
         c.tox_friend_get_last_online,
         self,
@@ -203,7 +203,7 @@ pub const ErrQuery = enum(c.Tox_Err_Friend_Query) {
 ///
 /// The return value is equal to the `length` argument received by the last
 /// `friend_name` callback.
-pub fn nameSize(self: Tox, friend_number: u32) wrap.ErrSet(ErrQuery)!usize {
+pub fn nameSize(self: anytype, friend_number: u32) wrap.ErrSet(ErrQuery)!usize {
     return wrap.getResult(
         c.tox_friend_get_name_size,
         self,
@@ -223,13 +223,13 @@ pub fn nameSize(self: Tox, friend_number: u32) wrap.ErrSet(ErrQuery)!usize {
 ///
 /// @param name A valid memory region large enough to store the friend's name.
 ///
-pub fn name(self: Tox, friend_number: u32, name_buffer: []u8) ![]const u8 {
+pub fn name(self: anytype, friend_number: u32, name_buffer: []u8) ![]const u8 {
     return wrap.fillBuffer(
         c.tox_friend_get_name,
         self,
         .{friend_number},
         name_buffer,
-        nameSize(self, friend_number),
+        try nameSize(self, friend_number),
         ErrQuery,
     );
 }
@@ -249,12 +249,12 @@ pub fn nameCallback(self: anytype, ctx: anytype, comptime hd: anytype) void {
 
 /// @brief Return the length of the friend's status message.
 /// If the friend number is invalid error.NotFound will be returned.
-pub fn statusMessageSize(self: Friend, friend_id: u32) !usize {
+pub fn statusMessageSize(self: anytype, friend_id: u32) wrap.ErrSet(ErrQuery)!usize {
     return wrap.getResult(
         c.tox_friend_get_status_message_size,
         self,
         .{friend_id},
-        c.TOX_ERR_FRIEND_QUERY_OK,
+        ErrQuery,
     );
 }
 
@@ -266,13 +266,13 @@ pub fn statusMessageSize(self: Friend, friend_id: u32) !usize {
 /// `friend_status_message` callback.
 ///
 /// @param status_message A valid memory region large enough to store the friend's status message.
-pub fn statusMessage(self: Tox, friend_number: u32, status_message_buffer: []u8) ![]const u8 {
+pub fn statusMessage(self: anytype, friend_number: u32, status_message_buffer: []u8) ![]const u8 {
     return wrap.fillBuffer(
         c.tox_friend_get_status_message,
         self,
         .{friend_number},
         status_message_buffer,
-        statusMessageSize(self, friend_number),
+        try statusMessageSize(self, friend_number),
         ErrQuery,
     );
 }
@@ -304,11 +304,13 @@ pub fn statusMessageCallback(
 /// @deprecated This getter is deprecated. Use the event and store the status
 ///   in the client state.
 pub fn userStatus(self: Friend, friend_id: u32) wrap.ErrSet(ErrQuery)!Tox.UserStatus {
-    return wrap.getResult(
-        c.tox_friend_get_status,
-        self,
-        .{friend_id},
-        c.TOX_ERR_FRIEND_QUERY_OK,
+    return @enumFromInt(
+        try wrap.getResult(
+            c.tox_friend_get_status,
+            self,
+            .{friend_id},
+            ErrQuery,
+        ),
     );
 }
 

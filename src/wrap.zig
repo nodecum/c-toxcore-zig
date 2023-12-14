@@ -83,9 +83,9 @@ pub fn fillBuffer(
     if (buf.len < fill_len)
         return error.BufferTooSmall;
     // get the Error type
-    const Err = @typeInfo(@typeInfo(@TypeOf(fct)).Fn.params[args.len + 1].type.?).Pointer.child;
+    const Err = @typeInfo(@typeInfo(@TypeOf(fct)).Fn.params[args.len + 2].type.?).Pointer.child;
     var err: Err = 0;
-    _ = @call(.auto, fct, .{self.handle} ++ .{args} ++ .{ @as([*c]u8, buf), &err });
+    _ = @call(.auto, fct, .{self.handle} ++ args ++ .{ @as([*c]u8, @ptrCast(buf)), &err });
     try checkErr(err, err_enum);
     return buf[0..fill_len];
 }

@@ -4,8 +4,8 @@
     .paths = .{""},
     .dependencies = .{
         .@"c-toxcore" = .{
-	    .url = "https://github.com/nodecum/c-toxcore/archive/da289baa4c696c8a0cba8cae949f90eea828bd59.tar.gz",
-	    .hash ="122074bda9653fedb82d1ff69e33f91bd970a1998aee927aae4e0dc45bde74a821f4",
+	    .url = "https://github.com/nodecum/c-toxcore/archive/2afc711f682962d536b83a06b30fdc585fe93ba2.tar.gz",
+	    .hash = "12205dc371b3da557fa28c7839073d28fd2ffd19b8d9dd248d8440c984a07c543315",
         },
     },
 }
