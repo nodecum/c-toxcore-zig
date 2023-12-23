@@ -3,9 +3,13 @@
     .version = "0.0.1",
     .paths = .{""},
     .dependencies = .{
+        .libsodium = .{
+            .url = "https://github.com/jedisct1/libsodium/archive/93a6e79750a31bc0b946bf483b2ba1c77f9e94ce.tar.gz",
+            .hash = "1220f4d80a9bd3cf5db236a469020fbcd2e14ceb91fd2f775e3142ddccaee2b8698d",
+        },
         .@"c-toxcore" = .{
-	    .url = "https://github.com/nodecum/c-toxcore/archive/2afc711f682962d536b83a06b30fdc585fe93ba2.tar.gz",
-	    .hash = "12205dc371b3da557fa28c7839073d28fd2ffd19b8d9dd248d8440c984a07c543315",
+            .url = "https://github.com/nodecum/c-toxcore/archive/b5d26512d24ac3d302d500727d40a66327a0cfad.tar.gz",
+            .hash = "1220f5e4853d076472b36c86eb29bbb7dd7705a4aeb4662f959a74195e706be9bfbd",
         },
     },
 }

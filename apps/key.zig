@@ -11,7 +11,7 @@ pub fn main() !void {
 
     var pk: [pk_size]u8 = undefined;
     var sk: [sk_size]u8 = undefined;
-    var ns: u32 = 0x12345678;
+    const ns = @as(u32, 0x12345678);
     var ad: [ad_size]u8 = undefined;
 
     try sodium.crypto_box.key_pair(&pk, &sk);

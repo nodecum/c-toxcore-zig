@@ -1,0 +1,6 @@
+* c-toxcore-zig
+Zig wrapper for c-toxcore library.
+
+** build
+
+: zig build run-local-test

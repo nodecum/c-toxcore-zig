@@ -1,7 +1,7 @@
 const std = @import("std");
 
 const APPS = .{
-    "key", "local-test", "echo-bot",
+    "key", "show-keys", "local-test", "echo-bot",
 };
 
 pub fn build(b: *std.Build) !void {
@@ -21,6 +21,7 @@ pub fn build(b: *std.Build) !void {
             .shared = false,
         },
     );
+    const libsodium_dep = b.dependency("libsodium", .{});
     const c_toxcore_lib = c_toxcore_dep.artifact("toxcore");
     const tox = b.addModule("tox", .{
         .source_file = .{ .path = "src/tox.zig" },
@@ -54,7 +55,7 @@ pub fn build(b: *std.Build) !void {
         app.addModule("tox", tox);
 
         app.linkLibrary(c_toxcore_lib);
-
+        app.addIncludePath(libsodium_dep.path("src/libsodium/include"));
         var run = b.addRunArtifact(app);
         if (b.args) |args| run.addArgs(args);
         b.step(
