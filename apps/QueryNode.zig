@@ -21,13 +21,14 @@ fn run_(
             .secret_key = query.secret_key,
             .nospam = query.nospam,
             .port = query.port,
-            .timeout = 20000,
+            .timeout = query.timeout,
             .keep_running = keep_running,
         },
     );
     defer node.deinit();
     try node.setName(node.name, "test the tox api");
-    log.debug("my address is: {s}", .{try node.getAddress()});
+    var addrBuf: [Tox.address_size * 2]u8 = undefined;
+    log.debug("my address is: {s}", .{try node.getAddress(&addrBuf)});
     try node.bootstrap(boot.host, boot.port, boot.public_key);
     const friend_status_message = "responding your messages";
     //{
@@ -72,7 +73,7 @@ fn run_(
     }
     // friend.getPublicKey
     {
-        const public_key_hex_size = comptime sodium.hexSizeForBin(sodium.crypto_box.public_key_size);
+        const public_key_hex_size = sodium.crypto_box.public_key_size * 2;
         var public_key: [public_key_hex_size]u8 = undefined;
         const public_key_hex = try node.friendGetPublicKey(friend_id, &public_key);
         if (!std.mem.eql(u8, public_key_hex, resp.public_key)) {

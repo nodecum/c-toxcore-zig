@@ -4,6 +4,9 @@ const sodium = @import("sodium");
 const Node = @This();
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
+const hexToBytes = std.fmt.hexToBytes;
+const bytesToHex = std.fmt.bytesToHex;
+const bytesToHexBuf = Tox.hex.bytesToHexBuf;
 
 const log = std.log.scoped(.Node);
 
@@ -69,8 +72,9 @@ pub const Options = struct {
 pub fn init(allocator: Allocator, opt: Options) !Node {
     var tox_opt = Tox.Options{};
     var secret_key_bin: [sodium.crypto_box.secret_key_size]u8 = undefined;
+    _ = try hexToBytes(&secret_key_bin, opt.secret_key);
     tox_opt.savedata_type = .key;
-    tox_opt.savedata_data = @ptrCast(try sodium.hex2bin(&secret_key_bin, opt.secret_key));
+    tox_opt.savedata_data = @ptrCast(secret_key_bin[0..]);
     tox_opt.start_port = opt.port;
     var self = Node{
         .allocator = allocator,
@@ -105,46 +109,43 @@ pub fn bootstrap(
     bs_node_public_key_hex: []const u8,
 ) !void {
     var bs_node_public_key_bin: [sodium.crypto_box.public_key_size]u8 = undefined;
+    _ = try hexToBytes(&bs_node_public_key_bin, bs_node_public_key_hex);
     try self.tox.bootstrap(
         bs_node_host,
         bs_node_port,
-        try sodium.hex2bin(
-            &bs_node_public_key_bin,
-            bs_node_public_key_hex,
-        ),
+        bs_node_public_key_bin[0..],
     );
 }
 
-pub fn getAddress(self: Node) ![]const u8 {
+pub fn getAddress(self: Node, address: []u8) ![]const u8 {
     var addr_bin: [Tox.address_size]u8 = undefined;
     try self.tox.getAddress(&addr_bin);
-    var addr_hex: [sodium.hexSizeForBin(Tox.address_size)]u8 = undefined;
-    return try sodium.bin2hex(&addr_hex, &addr_bin, true);
+    return try bytesToHexBuf(&addr_bin, address, .upper);
 }
 
 pub fn friendAdd(self: Node, friend_address: []const u8, message: []const u8) !u32 {
     var rpn_addr_bin: [Tox.address_size]u8 = undefined;
-    _ = try sodium.hex2bin(&rpn_addr_bin, friend_address);
+    _ = try hexToBytes(&rpn_addr_bin, friend_address);
     return try self.tox.friend.add(&rpn_addr_bin, message);
 }
 
 pub fn friendAddNoRequest(self: Node, friend_address: []const u8) !u32 {
     var rpn_addr_bin: [Tox.address_size]u8 = undefined;
-    _ = try sodium.hex2bin(&rpn_addr_bin, friend_address);
+    _ = try hexToBytes(&rpn_addr_bin, friend_address);
     return try self.tox.friend.addNoRequest(&rpn_addr_bin);
 }
 
 pub fn friendByPublicKey(self: Node, public_key_hex: []const u8) !u32 {
     var public_key_bin: [sodium.crypto_box.public_key_size]u8 = undefined;
     return try self.tox.friend.byPublicKey(
-        try sodium.hex2bin(&public_key_bin, public_key_hex),
+        try hexToBytes(&public_key_bin, public_key_hex),
     );
 }
 
 pub fn friendGetPublicKey(self: Node, friend_id: u32, public_key: []u8) ![]const u8 {
     var public_key_bin: [sodium.crypto_box.public_key_size]u8 = undefined;
     _ = try self.tox.friend.getPublicKey(friend_id, &public_key_bin);
-    return try sodium.bin2hex(public_key, &public_key_bin, true);
+    return try bytesToHexBuf(public_key_bin, public_key, .upper);
 }
 
 pub fn check(

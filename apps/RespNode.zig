@@ -21,13 +21,14 @@ fn run_(
             .secret_key = resp.secret_key,
             .nospam = resp.nospam,
             .port = resp.port,
-            .timeout = 10000,
+            .timeout = resp.timeout,
             .keep_running = keep_running,
         },
     );
     defer node.deinit();
     try node.setName(node.name, "responding your messages");
-    log.debug("my address is: {s}", .{try node.getAddress()});
+    var addrBuf: [Tox.address_size * 2]u8 = undefined;
+    log.debug("my address is: {s}", .{try node.getAddress(&addrBuf)});
     try node.bootstrap(boot.host, boot.port, boot.public_key);
     _ = try node.friendAddNoRequest(query.address);
 

@@ -2,6 +2,8 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const Tox = @import("tox");
 const sodium = @import("sodium");
+const bytesToHexBuf = Tox.hex.bytesToHexBuf;
+const hexToBytes = std.fmt.hexToBytes;
 
 pub const std_options = struct {
     // Set the log level to info
@@ -14,7 +16,7 @@ const savedata_tmp_fn = "savedata.tox.tmp";
 /// update savedata file
 pub fn updateSavedataFile(tox: Tox, alloc: Allocator) !void {
     const size = tox.getSavedataSize();
-    var mem = try alloc.alloc(u8, size);
+    const mem = try alloc.alloc(u8, size);
     defer alloc.free(mem);
     tox.getSavedata(mem);
     const cwd = std.fs.cwd();
@@ -75,13 +77,13 @@ pub fn bootstrap(tox: Tox, alloc: Allocator) !void {
             "82EF82BA33445A1F91A7DB27189ECFC0C013E06E3DA71F588ED692BED625EC23",
         },
     };
-    var key_bin = try alloc.alloc(u8, Tox.publicKeySize());
+    const key_bin = try alloc.alloc(u8, Tox.publicKeySize());
 
     for (nodes) |node| {
         try tox.bootstrap(
             node[0],
             node[1],
-            try sodium.hex2bin(key_bin, node[2]),
+            try hexToBytes(key_bin, node[2]),
         );
     }
 }
@@ -121,8 +123,8 @@ pub fn main() !void {
     var tox = try Tox.init(opt);
     defer tox.deinit();
 
-    tox.connectionStatusCallback({}, connectionStatus);
-    tox.friend.nameCallback({}, friendName);
+    tox.connectionStatusCallback(void, connectionStatus);
+    tox.friend.nameCallback(void, friendName);
     const name = "Echo Bot";
     try tox.setName(name);
 
@@ -131,17 +133,15 @@ pub fn main() !void {
 
     try bootstrap(tox, alloc);
 
-    var adr = try alloc.alloc(u8, Tox.addressSize());
+    const adr = try alloc.alloc(u8, Tox.addressSize());
     defer alloc.free(adr);
     try tox.getAddress(adr);
-    var adrhex = try alloc.alloc(u8, sodium.hexSizeForBin(Tox.addressSize()));
+    const adrhex = try alloc.alloc(u8, 2 * Tox.addressSize());
     defer alloc.free(adrhex);
-
-    std.debug.print("my address is: {s}\n", .{try sodium.bin2hex(adrhex, adr, true)});
+    _ = try bytesToHexBuf(adr, adrhex, .upper);
+    std.debug.print("my address is: {s}\n", .{adrhex});
     try updateSavedataFile(tox, alloc);
 
-    try tox.friend.delete(0);
-    //_ = foo;
     while (true) {
         tox.iterate({});
         std.time.sleep(tox.iterationInterval() * 1000 * 1000);

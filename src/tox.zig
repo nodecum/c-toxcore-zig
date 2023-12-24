@@ -10,6 +10,8 @@ const inet_c = @cImport({
     @cInclude("arpa/inet.h");
 });
 
+pub const hex = @import("../src/hex.zig");
+
 const Tox = @This();
 const wrap = @import("wrap.zig");
 const Friend = @import("tox/friend.zig");

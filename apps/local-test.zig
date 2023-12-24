@@ -6,7 +6,7 @@ const QueryNode = @import("QueryNode.zig");
 
 pub const std_options = struct {
     // Set the log level to info
-    pub const log_level = .info;
+    pub const log_level = .debug;
 };
 
 const localhost = "127.0.0.1";
@@ -28,6 +28,7 @@ const resp = NodeInfo{
     .address = "6AF61B03D5668780A0D10F31808BBB07321E2C07B9D319DC4EAC88B638D0282B123456789BC4",
     .host = localhost,
     .port = 33446,
+    .timeout = 20000,
 };
 const query = NodeInfo{
     .name = "query-node",
@@ -37,6 +38,7 @@ const query = NodeInfo{
     .address = "2FA9EF99E15B667A286187F13D7C82A9F9A12E08355BAF2503EEECC19F7ABA0F123456789495",
     .host = localhost,
     .port = 33447,
+    .timeout = 40000,
 };
 
 pub fn main() !void {
