@@ -56,7 +56,9 @@ pub fn build(b: *std.Build) !void {
 
         app.linkLibrary(c_toxcore_lib);
         app.addIncludePath(libsodium_dep.path("src/libsodium/include"));
+
         var run = b.addRunArtifact(app);
+        b.installArtifact(app);
         if (b.args) |args| run.addArgs(args);
         b.step(
             "run-" ++ app_name,
