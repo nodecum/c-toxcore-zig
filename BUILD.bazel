@@ -1,0 +1,12 @@
+load("@rules_zig//zig:defs.bzl", "zig_test")
+
+zig_test(
+    name = "testsuite",
+    size = "small",
+    srcs = glob(["src/**/*.zig"]),
+    cdeps = [
+        "//c-toxcore",
+        "@rules_zig//zig/lib:libc",
+    ],
+    main = "src/tox.zig",
+)

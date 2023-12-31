@@ -1,0 +1,15 @@
+---
+_extends: .github
+
+repository:
+  name: zig-toxcore-c
+  description: Zig wrapper for c-toxcore library.
+  topics: c, tox, networking, zig, ffi
+
+branches:
+  - name: "master"
+    protection:
+      required_status_checks:
+        contexts:
+          - "Mergeable"
+          - "restyled"
