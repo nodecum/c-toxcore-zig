@@ -1,7 +1,7 @@
 load("@rules_zig//zig:defs.bzl", "zig_test")
 load("//tools/project:build_defs.bzl", "project")
 
-project()
+project(license = "gpl3-https")
 
 zig_test(
     name = "testsuite",
