@@ -1,4 +1,7 @@
 load("@rules_zig//zig:defs.bzl", "zig_test")
+load("//tools/project:build_defs.bzl", "project")
+
+project()
 
 zig_test(
     name = "testsuite",
