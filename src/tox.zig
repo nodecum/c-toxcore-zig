@@ -14,7 +14,7 @@ pub const hex = @import("../src/hex.zig");
 
 const Tox = @This();
 const wrap = @import("wrap.zig");
-const Friend = @import("tox/friend.zig");
+const Friend = @import("friend.zig");
 const log = std.log.scoped(.tox);
 
 /// The major version number.
