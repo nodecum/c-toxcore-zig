@@ -1,14 +1,11 @@
 const std = @import("std");
+const Build = std.Build;
 
 const APPS = .{
     "key", "show-keys", "local-test", "echo-bot",
 };
 
-pub fn build(b: *std.Build) !void {
-    const root_path = b.pathFromRoot(".");
-    var cwd = try std.fs.openDirAbsolute(root_path, .{});
-    defer cwd.close();
-
+pub fn build(b: *Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -24,18 +21,21 @@ pub fn build(b: *std.Build) !void {
     const libsodium_dep = b.dependency("libsodium", .{});
     const c_toxcore_lib = c_toxcore_dep.artifact("toxcore");
     const tox = b.addModule("tox", .{
-        .source_file = .{ .path = "src/tox.zig" },
+        .root_source_file = .{ .path = "src/tox.zig" },
     });
+    tox.addIncludePath(c_toxcore_dep.path("."));
     const sodium = b.addModule("sodium", .{
-        .source_file = .{ .path = "src/sodium.zig" },
+        .root_source_file = .{ .path = "src/sodium.zig" },
     });
-
+    sodium.addIncludePath(libsodium_dep.path("src/libsodium/include"));
     const test_exe = b.addTest(.{
         .root_source_file = .{ .path = "src/tox.zig" },
         .target = target,
         .optimize = optimize,
     });
     test_exe.linkLibrary(c_toxcore_lib);
+    //test_exe.installLibraryHeaders(c_toxcore_lib);
+    b.installArtifact(test_exe);
     const run_test = b.addRunArtifact(test_exe);
 
     const test_step = b.step("test", "Run all tests");
@@ -51,11 +51,11 @@ pub fn build(b: *std.Build) !void {
             .target = target,
             .optimize = optimize,
         });
-        app.addModule("sodium", sodium);
-        app.addModule("tox", tox);
+        app.root_module.addImport("sodium", sodium);
+        app.root_module.addImport("tox", tox);
 
         app.linkLibrary(c_toxcore_lib);
-        app.addIncludePath(libsodium_dep.path("src/libsodium/include"));
+        //app.installLibraryHeaders(c_toxcore_lib);
 
         var run = b.addRunArtifact(app);
         b.installArtifact(app);

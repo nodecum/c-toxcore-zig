@@ -1,15 +1,15 @@
 .{
-    .name = "c-toxcore-zig",
+    .name = "zig-toxcore-c",
     .version = "0.0.1",
     .paths = .{""},
     .dependencies = .{
         .libsodium = .{
-            .url = "https://github.com/jedisct1/libsodium/archive/93a6e79750a31bc0b946bf483b2ba1c77f9e94ce.tar.gz",
-            .hash = "1220f4d80a9bd3cf5db236a469020fbcd2e14ceb91fd2f775e3142ddccaee2b8698d",
-        },
+            .url = "https://github.com/jedisct1/libsodium/archive/56bef8abc59b6db7ce5a94ebce5d0843313d3ce2.tar.gz",
+            .hash = "1220af4c5faf5ab037d3e574d462d47a01796eabdf7c32e52220d4065922a2ed8f55",
+      },
         .@"c-toxcore" = .{
-            .url = "https://github.com/nodecum/c-toxcore/archive/b5d26512d24ac3d302d500727d40a66327a0cfad.tar.gz",
-            .hash = "1220f5e4853d076472b36c86eb29bbb7dd7705a4aeb4662f959a74195e706be9bfbd",
+            .url = "https://github.com/nodecum/c-toxcore/archive/9f5eb26095e397c161778aad2f2b0d76dfda17ec.tar.gz",
+            .hash = "12203c61fa1d9e9b8eeb6c7591f68531463d557652fb6ea2df90eeb0a4e03685b998",
         },
     },
 }
