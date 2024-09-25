@@ -1,11 +1,11 @@
 ///! Friend list management
 const std = @import("std");
 const Friend = @This();
-const Tox = @import("../tox.zig");
+const Tox = @import("tox.zig");
 const c = @cImport({
     @cInclude("toxcore/tox.h");
 });
-const wrap = @import("../wrap.zig");
+const wrap = @import("wrap.zig");
 handle: *c.Tox,
 
 pub const ErrAdd = enum(c.Tox_Err_Friend_Add) {

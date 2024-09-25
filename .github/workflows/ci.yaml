@@ -1,0 +1,33 @@
+name: ci
+
+# Run on push and once a week to keep the images from bitrotting and to
+# identify issues while no commits are being pushed.
+on:
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: "52 2 * * 0"
+
+# Cancel old PR builds when pushing new commits.
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{matrix.os}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: goto-bus-stop/setup-zig@v2
+      - run: zig build test
+      - run: zig build apps
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: goto-bus-stop/setup-zig@v2
+      - run: zig fmt --check src/*.zig

@@ -1,0 +1,73 @@
+load("@rules_zig//zig:defs.bzl", "zig_binary", "zig_library", "zig_package", "zig_test")
+load("//tools/project:build_defs.bzl", "project")
+
+project(license = "gpl3-https")
+
+zig_package(
+    name = "sodium",
+    main = "src/sodium.zig",
+)
+
+zig_package(
+    name = "tox",
+    srcs = [
+        "src/friend.zig",
+        "src/hex.zig",
+        "src/wrap.zig",
+    ],
+    main = "src/tox.zig",
+    deps = [":sodium"],
+)
+
+zig_library(
+    name = "zig-toxcore-c",
+    cdeps = [
+        "//c-toxcore",
+        "@rules_zig//zig/lib:libc",
+    ],
+    main = "src/tox.zig",
+    deps = [":tox"],
+)
+
+zig_package(
+    name = "node_info",
+    srcs = [
+        "apps/BootNode.zig",
+        "apps/Node.zig",
+        "apps/NodeInfo.zig",
+        "apps/QueryNode.zig",
+        "apps/RespNode.zig",
+    ],
+    main = "src/tox.zig",
+    deps = [":sodium"],
+)
+
+[zig_binary(
+    name = app,
+    cdeps = [
+        "//c-toxcore",
+        "@rules_zig//zig/lib:libc",
+    ],
+    main = "apps/%s.zig" % app,
+    deps = [
+        ":node_info",
+        ":sodium",
+        ":tox",
+    ],
+) for app in [
+    "key",
+    "show-keys",
+    "local-test",
+    "echo-bot",
+]]
+
+[zig_test(
+    name = src[4:-4].replace("/", "_") + "_test",
+    size = "small",
+    cdeps = [
+        "//c-toxcore",
+        "@rules_zig//zig/lib:libc",
+    ],
+    main = src,
+    deps = [":tox"],
+) for src in glob(["src/*.zig"])]

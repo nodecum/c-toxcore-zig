@@ -3,18 +3,12 @@ const std = @import("std");
 const c = @cImport({
     @cInclude("toxcore/tox.h");
 });
-const sodium_c = @cImport({
-    @cInclude("sodium.h");
-});
-const inet_c = @cImport({
-    @cInclude("arpa/inet.h");
-});
 
 pub const hex = @import("../src/hex.zig");
 
 const Tox = @This();
 const wrap = @import("wrap.zig");
-const Friend = @import("tox/friend.zig");
+const Friend = @import("friend.zig");
 const log = std.log.scoped(.tox);
 
 /// The major version number.
@@ -132,7 +126,7 @@ pub fn addressFromPublicKey(
 ) ![]const u8 {
     if (address.len < address_size)
         return error.BufferTooSmall;
-    const nospam_net = inet_c.htonl(nospam_host);
+    const nospam_net = std.mem.nativeToBig(u32, nospam_host);
     @memcpy(address[0..public_key.len], public_key);
     @memcpy(address[public_key.len..], @as([*]const u8, @ptrCast(&nospam_net)));
     const nospam_len = @sizeOf(@TypeOf(nospam_net));
