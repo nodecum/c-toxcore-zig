@@ -34,19 +34,19 @@ fn run_(i: NodeInfo, keep_running: *bool) !void {
     _ = try bytesToHexBuf(&addr_bin, &addr_hex, .upper);
     log.debug("{s} startup, my address is: {s}", .{ i.name, addr_hex[0..] });
 
-    while (@atomicLoad(bool, keep_running, .SeqCst)) {
+    while (@atomicLoad(bool, keep_running, .seq_cst)) {
         // log.debug("{s} iterate", .{i.name});
         tox.iterate({});
-        if (@atomicLoad(bool, keep_running, .SeqCst)) {
+        if (@atomicLoad(bool, keep_running, .seq_cst)) {
             std.time.sleep(tox.iterationInterval() * 1000 * 1000);
         }
     }
 }
 
 pub fn run(i: NodeInfo, keep_running: *bool, failed: *bool) void {
-    defer @atomicStore(bool, keep_running, false, .SeqCst);
+    defer @atomicStore(bool, keep_running, false, .seq_cst);
     run_(i, keep_running) catch |err| {
         log.err("{s}", .{@errorName(err)});
-        @atomicStore(bool, failed, true, .SeqCst);
+        @atomicStore(bool, failed, true, .seq_cst);
     };
 }

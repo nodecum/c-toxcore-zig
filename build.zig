@@ -10,26 +10,26 @@ pub fn build(b: *Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const c_toxcore_dep = b.dependency(
-        "c-toxcore",
+        "build-c-toxcore-with-zig",
         .{
             .target = target,
             .optimize = optimize,
-            .static = true,
-            .shared = false,
+            //.static = true,
+            //.shared = false,
         },
     );
     const libsodium_dep = b.dependency("libsodium", .{});
-    const c_toxcore_lib = c_toxcore_dep.artifact("toxcore");
+    const c_toxcore_lib = c_toxcore_dep.artifact("build-c-toxcore-with-zig");
     const tox = b.addModule("tox", .{
-        .root_source_file = .{ .path = "src/tox.zig" },
+        .root_source_file = b.path("src/tox.zig"),
     });
-    tox.addIncludePath(c_toxcore_dep.path("."));
+    tox.addIncludePath(c_toxcore_dep.path("zig-out/include"));
     const sodium = b.addModule("sodium", .{
-        .root_source_file = .{ .path = "src/sodium.zig" },
+        .root_source_file = b.path("src/sodium.zig"),
     });
     sodium.addIncludePath(libsodium_dep.path("src/libsodium/include"));
     const test_exe = b.addTest(.{
-        .root_source_file = .{ .path = "src/tox.zig" },
+        .root_source_file = b.path("src/tox.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -45,9 +45,8 @@ pub fn build(b: *Build) void {
     inline for (APPS) |app_name| {
         const app = b.addExecutable(.{
             .name = app_name,
-            .root_source_file = .{
-                .path = "apps" ++ std.fs.path.sep_str ++ app_name ++ ".zig",
-            },
+            .root_source_file = b.path("apps" ++ std.fs.path.sep_str ++ app_name ++ ".zig"),
+
             .target = target,
             .optimize = optimize,
         });

@@ -3,13 +3,16 @@
     .version = "0.0.1",
     .paths = .{""},
     .dependencies = .{
+        // versions used 1.0.18 .. 1.0.19 .. 1.0.20
         .libsodium = .{
-            .url = "https://github.com/jedisct1/libsodium/archive/56bef8abc59b6db7ce5a94ebce5d0843313d3ce2.tar.gz",
-            .hash = "1220af4c5faf5ab037d3e574d462d47a01796eabdf7c32e52220d4065922a2ed8f55",
-      },
-        .@"c-toxcore" = .{
-            .url = "https://github.com/nodecum/c-toxcore/archive/9f5eb26095e397c161778aad2f2b0d76dfda17ec.tar.gz",
-            .hash = "12203c61fa1d9e9b8eeb6c7591f68531463d557652fb6ea2df90eeb0a4e03685b998",
+            .url = "https://github.com/jedisct1/libsodium/archive/b4ad79202bf1ac6e40464f301e637acd3a5949c9.tar.gz",
+            .hash = "122079caf5b1e1b66c4ea0859debbcc076f8303950833076654e43e891dd2934d96c",
+            // .url = "https://github.com/jedisct1/libsodium/releases/download/1.0.20-RELEASE/libsodium-1.0.20.tar.gz",
+        },
+        .@"build-c-toxcore-with-zig" = .{
+            .path = "../build-c-toxcore-with-zig",
+            //.url = "https://github.com/nodecum/c-toxcore/archive/9f5eb26095e397c161778aad2f2b0d76dfda17ec.tar.gz",
+            //.hash = "12203c61fa1d9e9b8eeb6c7591f68531463d557652fb6ea2df90eeb0a4e03685b998",
         },
     },
 }

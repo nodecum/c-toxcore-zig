@@ -32,9 +32,9 @@ fn run_(
     try node.bootstrap(boot.host, boot.port, boot.public_key);
     _ = try node.friendAddNoRequest(query.address);
 
-    while (@atomicLoad(bool, keep_running, .SeqCst)) {
+    while (@atomicLoad(bool, keep_running, .seq_cst)) {
         node.tox.iterate(&node);
-        if (@atomicLoad(bool, keep_running, .SeqCst)) {
+        if (@atomicLoad(bool, keep_running, .seq_cst)) {
             std.time.sleep(node.tox.iterationInterval() * 1000 * 1000);
         }
     }
@@ -48,9 +48,9 @@ pub fn run(
     keep_running: *bool,
     failed: *bool,
 ) void {
-    defer @atomicStore(bool, keep_running, false, .SeqCst);
+    defer @atomicStore(bool, keep_running, false, .seq_cst);
     run_(allocator, query, boot, resp, keep_running) catch |err| {
         log.err("{s}", .{@errorName(err)});
-        @atomicStore(bool, failed, true, .SeqCst);
+        @atomicStore(bool, failed, true, .seq_cst);
     };
 }

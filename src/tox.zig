@@ -734,9 +734,9 @@ pub fn setStatus(self: Tox, status: UserStatus) void {
 pub fn getStatus(self: Tox) UserStatus {
     return @enumFromInt(c.tox_self_get_status(self.handle));
 }
-//pub const std_options = struct {
-//    pub const log_level = .debug;
-//};
+pub const std_options = .{
+    .log_level = .debug,
+};
 
 test {
     std.testing.refAllDecls(@This());

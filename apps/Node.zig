@@ -160,7 +160,7 @@ pub fn check(
     var falseValue: []const u8 = undefined;
     var wait = false;
     const t0 = std.time.milliTimestamp();
-    while (@atomicLoad(bool, self.*.keep_running, .SeqCst)) {
+    while (@atomicLoad(bool, self.*.keep_running, .seq_cst)) {
         if (l.*.items.len > id) {
             if (@field(l.*.items[id], field)) |v| {
                 if (std.mem.eql(u8, v, value)) {
@@ -187,7 +187,7 @@ pub fn check(
             }
             return error.Timeout;
         }
-        if (@atomicLoad(bool, self.*.keep_running, .SeqCst) and wait) {
+        if (@atomicLoad(bool, self.*.keep_running, .seq_cst) and wait) {
             std.time.sleep(self.*.tox.iterationInterval() * 1000 * 1000);
         }
         self.*.tox.iterate(self);

@@ -5,9 +5,9 @@ const sodium = @import("sodium");
 const bytesToHexBuf = Tox.hex.bytesToHexBuf;
 const hexToBytes = std.fmt.hexToBytes;
 
-pub const std_options = struct {
+pub const std_options = .{
     // Set the log level to info
-    pub const log_level = .debug;
+    .log_level = .debug,
 };
 
 const savedata_fn = "savedata.tox";

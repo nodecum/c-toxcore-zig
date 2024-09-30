@@ -4,9 +4,9 @@ const BootNode = @import("BootNode.zig");
 const RespNode = @import("RespNode.zig");
 const QueryNode = @import("QueryNode.zig");
 
-pub const std_options = struct {
+pub const std_options = .{
     // Set the log level to info
-    pub const log_level = .debug;
+    .log_level = .debug,
 };
 
 const localhost = "127.0.0.1";

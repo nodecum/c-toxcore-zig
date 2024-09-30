@@ -135,9 +135,9 @@ pub fn run(
     keep_running: *bool,
     failed: *bool,
 ) void {
-    defer @atomicStore(bool, keep_running, false, .SeqCst);
+    defer @atomicStore(bool, keep_running, false, .seq_cst);
     run_(allocator, query, boot, resp, keep_running) catch |err| {
         log.err("{s}", .{@errorName(err)});
-        @atomicStore(bool, failed, true, .SeqCst);
+        @atomicStore(bool, failed, true, .seq_cst);
     };
 }

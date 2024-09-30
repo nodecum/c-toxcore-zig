@@ -6,7 +6,7 @@ const c = @cImport({
 });
 
 pub fn ErrSet(comptime ErrEnum: type) type {
-    const enum_fields = @typeInfo(ErrEnum).Enum.fields;
+    const enum_fields = @typeInfo(ErrEnum).@"enum".fields;
     // We count all enum fields which are not named 'Ok',
     // this will be the size of the new error set.
     comptime var n = 0;
@@ -22,7 +22,7 @@ pub fn ErrSet(comptime ErrEnum: type) type {
             i += 1;
         }
     }
-    return @Type(Type{ .ErrorSet = &err_fields });
+    return @Type(Type{ .error_set = &err_fields });
 }
 
 fn getEnumValue(
@@ -40,14 +40,14 @@ fn getEnumValue(
 /// this function returns an error if the c enum value 'cerr'
 /// which corresponds to an zig enum is not named 'Ok'.
 pub fn checkErr(cerr: anytype, comptime ErrEnum: type) ErrSet(ErrEnum)!void {
-    const enum_fields = @typeInfo(ErrEnum).Enum.fields;
+    const enum_fields = @typeInfo(ErrEnum).@"enum".fields;
     // let us find which enum field has the name 'Ok',
     // we check for this value first to have the normal case
     // be handled fast.
     const ok_value = getEnumValue("Ok", enum_fields);
     if (cerr == ok_value) return {};
     const err_set_t = ErrSet(ErrEnum);
-    const err_set = @typeInfo(err_set_t).ErrorSet.?;
+    const err_set = @typeInfo(err_set_t).error_set.?;
     // now return errors
     inline for (err_set) |f| {
         // find the value for the name
@@ -63,9 +63,9 @@ pub fn getResult(
     self: anytype,
     args: anytype,
     comptime err_enum: anytype,
-) !@typeInfo(@TypeOf(fct)).Fn.return_type.? {
+) !@typeInfo(@TypeOf(fct)).@"fn".return_type.? {
     // get the Error type
-    const Err = @typeInfo(@typeInfo(@TypeOf(fct)).Fn.params[args.len + 1].type.?).Pointer.child;
+    const Err = @typeInfo(@typeInfo(@TypeOf(fct)).@"fn".params[args.len + 1].type.?).pointer.child;
     var err: Err = 0;
     const result = @call(.auto, fct, .{self.handle} ++ args ++ .{&err});
     try checkErr(err, err_enum);
@@ -83,7 +83,7 @@ pub fn fillBuffer(
     if (buf.len < fill_len)
         return error.BufferTooSmall;
     // get the Error type
-    const Err = @typeInfo(@typeInfo(@TypeOf(fct)).Fn.params[args.len + 2].type.?).Pointer.child;
+    const Err = @typeInfo(@typeInfo(@TypeOf(fct)).@"fn".params[args.len + 2].type.?).pointer.child;
     var err: Err = 0;
     _ = @call(.auto, fct, .{self.handle} ++ args ++ .{ @as([*c]u8, @ptrCast(buf)), &err });
     try checkErr(err, err_enum);
@@ -103,21 +103,23 @@ fn CallbackHandle(comptime Args: []const type, comptime Context: type) type {
     for (Args, idx0..) |arg, i| {
         params[i] = .{ .type = arg, .is_generic = false, .is_noalias = false };
     }
-    return @Type(Type{ .Fn = .{
-        .calling_convention = .Unspecified,
-        .alignment = 0,
-        .is_generic = false,
-        .is_var_args = false,
-        .return_type = void,
-        .params = &params,
-    } });
+    return @Type(Type{
+        .@"fn" = .{
+            .calling_convention = .Unspecified,
+            //.alignment = 0,
+            .is_generic = false,
+            .is_var_args = false,
+            .return_type = void,
+            .params = &params,
+        },
+    });
 }
 
 fn ZigToC(comptime T: type) type {
     const i = @typeInfo(T);
     return switch (i) {
-        .Enum => i.Enum.tag_type,
-        .Bool, .Int, .Float => T,
+        .@"enum" => i.@"enum".tag_type,
+        .bool, .int, .float => T,
         else => @compileError("unimplemented conversion for " ++ @typeName(T)),
     };
 }
@@ -128,10 +130,10 @@ fn cToZig(cv: anytype, comptime zy: type) zy {
     const zi = @typeInfo(zy);
     if (cy == zy) {
         return cv;
-    } else if (zi == .Pointer) {
-        const zpy = zi.Pointer.child;
-        if (zi.Pointer.size == .Slice) {
-            if (ci == .Struct and ci.Struct.is_tuple) {
+    } else if (zi == .pointer) {
+        const zpy = zi.pointer.child;
+        if (zi.pointer.size == .Slice) {
+            if (ci == .@"struct" and ci.@"struct".is_tuple) {
                 // tuple of 2 args
                 if (cv.len == 2) {
                     // first argument
@@ -141,23 +143,23 @@ fn cToZig(cv: anytype, comptime zy: type) zy {
                     const cv1 = cv[1];
                     const cy1 = @TypeOf(cv1);
                     const ci1 = @typeInfo(cy1);
-                    if ((ci0 == .Pointer and ci0.Pointer.size == .C) and
-                        (ci0.Pointer.child == zpy) and
-                        ((ci1 == .Int) or (ci1 == .ComptimeInt)))
+                    if ((ci0 == .pointer and ci0.pointer.size == .C) and
+                        (ci0.pointer.child == zpy) and
+                        ((ci1 == .int) or (ci1 == .comptime_int)))
                     {
                         // Pointer and length => slice
                         return @as(zy, cv0[0..cv1]);
                     }
                 }
             }
-        } else if (zi.Pointer.size == .One) {
+        } else if (zi.pointer.size == .One) {
             return @as(zy, @ptrFromInt(@intFromPtr(cv)));
-            //if (ci == .Pointer and ci.Pointer.size == .C) {
+            //if (ci == .pointer and ci.pointer.size == .C) {
             //    return @as(zy, @ptrFromInt(@intFromPtr(cv)));
             // }
         }
-    } else if (zi == .Enum) {
-        if (ci == .Int or ci == .ComptimeInt) {
+    } else if (zi == .@"enum") {
+        if (ci == .int or ci == .comptime_int) {
             return @as(zy, @enumFromInt(cv));
         }
     }
@@ -174,13 +176,13 @@ test "C to Zig" {
 fn CTypes(comptime args: anytype) []const type {
     const args_ty = @TypeOf(args);
     const args_ti = @typeInfo(args_ty);
-    if (!(args_ti == .Struct and args_ti.Struct.is_tuple)) {
+    if (!(args_ti == .@"struct" and args_ti.@"struct".is_tuple)) {
         @compileError("expected tuple argument, found " ++ @typeName(args_ty));
     }
     comptime var n = 0;
     for (args) |a| {
         const a_ti = @typeInfo(@TypeOf(a));
-        if (a_ti == .Struct and a_ti.Struct.is_tuple) {
+        if (a_ti == .@"struct" and a_ti.@"struct".is_tuple) {
             // we drop the first, this is the Zig type
             for (1..a.len) |i| {
                 // plain types are the c arguments
@@ -194,7 +196,7 @@ fn CTypes(comptime args: anytype) []const type {
     n = 0;
     for (args) |a| {
         const a_ti = @typeInfo(@TypeOf(a));
-        if (a_ti == .Struct and a_ti.Struct.is_tuple) {
+        if (a_ti == .@"struct" and a_ti.@"struct".is_tuple) {
             // we drop the first, this is the Zig type
             for (1..a.len) |i| {
                 const b = a[i];
@@ -215,14 +217,14 @@ fn CTypes(comptime args: anytype) []const type {
 fn ZigTypes(comptime args: anytype) []const type {
     const args_ty = @TypeOf(args);
     const args_ti = @typeInfo(args_ty);
-    if (!(args_ti == .Struct and args_ti.Struct.is_tuple)) {
+    if (!(args_ti == .@"struct" and args_ti.@"struct".is_tuple)) {
         @compileError("expected tuple argument, found " ++ @typeName(args_ty));
     }
     comptime var Res: [args.len]type = undefined;
     inline for (args, 0..) |a, i| {
         const a_ty = @TypeOf(a);
         const a_ti = @typeInfo(a_ty);
-        if (a_ti == .Struct and a_ti.Struct.is_tuple) {
+        if (a_ti == .@"struct" and a_ti.@"struct".is_tuple) {
             // the first member of the tuple is the
             // argument for the zig call
             Res[i] = a[0];
@@ -240,7 +242,7 @@ fn zigValues(
 ) std.meta.Tuple(ZigTypes(args)) {
     const args_ty = @TypeOf(args);
     const args_ti = @typeInfo(args_ty);
-    if (!(args_ti == .Struct and args_ti.Struct.is_tuple)) {
+    if (!(args_ti == .@"struct" and args_ti.@"struct".is_tuple)) {
         @compileError("expected tuple argument, found " ++ @typeName(args_ty));
     }
 
@@ -250,13 +252,13 @@ fn zigValues(
     inline for (args, 0..) |a, i| {
         const a_ty = @TypeOf(a);
         const a_ti = @typeInfo(a_ty);
-        if (a_ti == .Struct and a_ti.Struct.is_tuple) {
+        if (a_ti == .@"struct" and a_ti.@"struct".is_tuple) {
             comptime var d: [a.len - 1]type = undefined;
             inline for (1..a.len, 0..) |j, k| {
                 const b = a[j];
                 const b_ty = @TypeOf(b);
                 const b_ti = @typeInfo(b);
-                if (b_ti == .Struct and b_ti.Struct.is_tuple) {
+                if (b_ti == .@"struct" and b_ti.@"struct".is_tuple) {
                     d[k] = b[0];
                 } else if (b_ty == type) {
                     d[k] = b;
@@ -273,7 +275,7 @@ fn zigValues(
                 if (b_ty == type) {
                     tuple[k] = c_args[ci];
                     ci += 1;
-                } else if (b_ti == .Struct and b_ti.Struct.is_tuple) {
+                } else if (b_ti == .@"struct" and b_ti.@"struct".is_tuple) {
                     tuple[k] = e_args[ei];
                     ei += 1;
                 }
@@ -312,26 +314,24 @@ pub fn setCallback(
     e_args: anytype,
     comptime hd: CallbackHandle(ZigTypes(Args), Ctx),
 ) void {
-    //const Ctx = @TypeOf(ctx);
-    const Ct = CTypes(Args);
-    const H = switch (Ct.len) {
+    const H = switch (CTypes(Args).len) {
         1 => struct {
-            fn cb(_: ?*c.Tox, c0: Ct[0], cx: ?*anyopaque) callconv(.C) void {
+            fn cb(_: ?*c.Tox, c0: CTypes(Args)[0], cx: ?*anyopaque) callconv(.C) void {
                 callHandle(Ctx, Args, hd, .{c0}, e_args, cx);
             }
         },
         2 => struct {
-            fn cb(_: ?*c.Tox, c0: Ct[0], c1: Ct[1], cx: ?*anyopaque) callconv(.C) void {
+            fn cb(_: ?*c.Tox, c0: CTypes(Args)[0], c1: CTypes(Args)[1], cx: ?*anyopaque) callconv(.C) void {
                 callHandle(Ctx, Args, hd, .{ c0, c1 }, e_args, cx);
             }
         },
         3 => struct {
-            fn cb(_: ?*c.Tox, c0: Ct[0], c1: Ct[1], c2: Ct[2], cx: ?*anyopaque) callconv(.C) void {
+            fn cb(_: ?*c.Tox, c0: CTypes(Args)[0], c1: CTypes(Args)[1], c2: CTypes(Args)[2], cx: ?*anyopaque) callconv(.C) void {
                 callHandle(Ctx, Args, hd, .{ c0, c1, c2 }, e_args, cx);
             }
         },
         4 => struct {
-            fn cb(_: ?*c.Tox, c0: Ct[0], c1: Ct[1], c2: Ct[2], c3: Ct[3], cx: ?*anyopaque) callconv(.C) void {
+            fn cb(_: ?*c.Tox, c0: CTypes(Args)[0], c1: CTypes(Args)[1], c2: CTypes(Args)[2], c3: CTypes(Args)[3], cx: ?*anyopaque) callconv(.C) void {
                 callHandle(Ctx, Args, hd, .{ c0, c1, c2, c3 }, e_args, cx);
             }
         },
