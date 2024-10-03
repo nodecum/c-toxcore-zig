@@ -1,10 +1,8 @@
 ///! Friend list management
 const std = @import("std");
+const c = @import("c-toxcore");
 const Friend = @This();
 const Tox = @import("tox.zig");
-const c = @cImport({
-    @cInclude("toxcore/tox.h");
-});
 const wrap = @import("wrap.zig");
 handle: *c.Tox,
 

@@ -1,8 +1,5 @@
 const std = @import("std");
-
-const c = @cImport({
-    @cInclude("toxcore/tox.h");
-});
+const c = @import("c-toxcore");
 
 pub const hex = @import("../src/hex.zig");
 

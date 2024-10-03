@@ -1,9 +1,7 @@
 // wrap utils
 const std = @import("std");
+const c = @import("c-toxcore");
 const Type = std.builtin.Type;
-const c = @cImport({
-    @cInclude("toxcore/tox.h");
-});
 
 pub fn ErrSet(comptime ErrEnum: type) type {
     const enum_fields = @typeInfo(ErrEnum).@"enum".fields;
