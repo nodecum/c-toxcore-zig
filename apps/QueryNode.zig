@@ -28,6 +28,7 @@ fn run_(
     defer node.deinit();
     try node.setName(node.name, "test the tox api");
     var addrBuf: [Tox.address_size * 2]u8 = undefined;
+    log.info("startup", .{});
     log.debug("my address is: {s}", .{try node.getAddress(&addrBuf)});
     try node.bootstrap(boot.host, boot.port, boot.public_key);
     const friend_status_message = "responding your messages";

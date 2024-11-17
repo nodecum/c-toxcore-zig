@@ -6,7 +6,7 @@ const QueryNode = @import("QueryNode.zig");
 
 pub const std_options = .{
     // Set the log level to info
-    .log_level = .debug,
+    .log_level = .info,
 };
 
 const localhost = "127.0.0.1";
@@ -51,10 +51,10 @@ pub fn main() !void {
     defer std.process.argsFree(alloc, args);
 
     // Get and print them!
-    std.debug.print("There are {d} args:\n", .{args.len});
-    for (args) |arg| {
-        std.debug.print("  {s}\n", .{arg});
-    }
+    // std.debug.print("There are {d} args:\n", .{args.len});
+    // for (args) |arg| {
+    //     std.debug.print("  {s}\n", .{arg});
+    // }
 
     var keep_running = true;
     var failure = false;

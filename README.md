@@ -15,3 +15,8 @@ to install this zig version using [zvm](https://www.zvm.app) do
 
 > zig build install
 
+## Run tests on nodes
+
+Setup a boot, response and query node in one executable and do some queries:
+
+> zig build run-local-test -- boot resp query

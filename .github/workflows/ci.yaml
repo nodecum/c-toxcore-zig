@@ -18,7 +18,7 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{matrix.os}}
     name: Build and Install
     steps:
@@ -28,6 +28,7 @@ jobs:
           version: 2024.10.0-mach
       - run: zig build test
       - run: zig build apps
+      - run: "zig build run-local-test -- boot resp query"
 
   lint:
     runs-on: ubuntu-latest

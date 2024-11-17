@@ -24,6 +24,7 @@ pub const Friend = struct {
     status_message: ?[]u8 = null,
     pub fn deinit(self: Friend, a: Allocator) void {
         if (self.name) |n| a.free(n);
+        if (self.status_message) |n| a.free(n);
     }
 };
 
