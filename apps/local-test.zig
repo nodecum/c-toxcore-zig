@@ -44,27 +44,50 @@ const query = NodeInfo{
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
+    defer _ = gpa.deinit();
+
+    // Parse args into string array (error union needs 'try')
+    const args = try std.process.argsAlloc(alloc);
+    defer std.process.argsFree(alloc, args);
+
+    // Get and print them!
+    std.debug.print("There are {d} args:\n", .{args.len});
+    for (args) |arg| {
+        std.debug.print("  {s}\n", .{arg});
+    }
 
     var keep_running = true;
     var failure = false;
     var threads: [3]std.Thread = undefined;
-    threads[0] = try std.Thread.spawn(
-        .{},
-        BootNode.run,
-        .{ boot, &keep_running, &failure },
-    );
-    threads[1] = try std.Thread.spawn(
-        .{},
-        RespNode.run,
-        .{ alloc, resp, boot, query, &keep_running, &failure },
-    );
-    threads[2] = try std.Thread.spawn(
-        .{},
-        QueryNode.run,
-        .{ alloc, query, boot, resp, &keep_running, &failure },
-    );
+    var n: u32 = 0;
+    for (args) |arg| {
+        if (std.mem.eql(u8, arg, "boot")) {
+            threads[n] = try std.Thread.spawn(
+                .{},
+                BootNode.run,
+                .{ boot, &keep_running, &failure },
+            );
+            n += 1;
+        }
 
-    for (threads) |t| {
+        if (std.mem.eql(u8, arg, "resp")) {
+            threads[n] = try std.Thread.spawn(
+                .{},
+                RespNode.run,
+                .{ alloc, resp, boot, query, &keep_running, &failure },
+            );
+            n += 1;
+        }
+        if (std.mem.eql(u8, arg, "query")) {
+            threads[n] = try std.Thread.spawn(
+                .{},
+                QueryNode.run,
+                .{ alloc, query, boot, resp, &keep_running, &failure },
+            );
+            n += 1;
+        }
+    }
+    for (threads[0..n]) |t| {
         t.join();
     }
     if (failure) {

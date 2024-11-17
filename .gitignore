@@ -55,5 +55,5 @@ dkms.conf
 *~
 
 # zig output
-zig-cache
+.zig-cache
 zig-out

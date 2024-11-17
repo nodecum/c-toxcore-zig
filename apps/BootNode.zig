@@ -32,7 +32,7 @@ fn run_(i: NodeInfo, keep_running: *bool) !void {
     var addr_bin: [Tox.address_size]u8 = undefined;
     try tox.getAddress(&addr_bin);
     _ = try bytesToHexBuf(&addr_bin, &addr_hex, .upper);
-    log.debug("{s} startup, my address is: {s}", .{ i.name, addr_hex[0..] });
+    log.debug("{s} startup, my address is: {s}\nusing port:{d}", .{ i.name, addr_hex[0..], i.port });
 
     while (@atomicLoad(bool, keep_running, .seq_cst)) {
         // log.debug("{s} iterate", .{i.name});
